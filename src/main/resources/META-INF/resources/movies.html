@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+
+
+    <meta charset="utf-8">
+    <meta name="description" content="My description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Movie Database</title>
+
+    <style>
+        .right {
+            padding-top: 0;
+            margin-top: 0;
+            vertical-align: top;
+        }
+        table {
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <nav>
+        <ul>
+            <li>My Movie database</li>
+            <li><a href="https://quarkus.io">Quarkus</a></li>
+            <li><a href="https://www.themoviedb.org/">Movie Database</a></li>
+        </ul>
+    </nav>
+    <h1>My Movie Database</h1>
+    <p>Store my
+        <mark>favorite</mark>
+        movies and
+        <mark>recommend</mark>
+        my next movies.
+    </p>
+</header>
+<main>
+    <hr>
+    <section id="movies">
+        <header>
+            <h2>My Movies</h2>
+        </header>
+    </section>
+    <section>
+        <hr>
+        <form id="add-movie-form">
+            <header>
+                <h2>Add a movie</h2>
+            </header>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="Title">
+            <label for="rating">Rating:</label>
+            <input type="number" id="rating" name="rating" placeholder="1" max="5" min="1">
+            <button type="button" id="add-movie">Submit Movie</button>
+        </form>
+    </section>
+
+<!--    <section id="recommendations">-->
+<!--        <hr>-->
+<!--        <header>-->
+<!--            <h2>Recommendations</h2>-->
+<!--        </header>-->
+<!--    </section>-->
+</main>
+<footer>
+    <hr>
+    <p>
+        <small><a href="mailto:clement@apache.org">clement@apache.org</a> | <a href="https://twitter.com/clementplop">@clementplop</a></small>
+    </p>
+</footer>
+</body>
+
+<script>
+    window.onload = function () {
+        retrieveMovies();
+        retrieveRecommendations();
+        document.getElementById("add-movie").addEventListener("click", addMovie);
+
+    };
+
+    function addMovie(e) {
+        e.preventDefault();
+        let form = document.getElementById('add-movie-form');
+        let formData = new FormData(form);
+        fetch("/movies", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: formData.get("title"),
+                rating: formData.get("rating")
+            })
+        }).then(x => {
+            document.getElementById("add-movie-form").reset();
+            retrieveMovies();
+            retrieveRecommendations();
+        })
+    }
+
+    function retrieveMovies() {
+        return fetch('/movies')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll("#movies aside").forEach(el => el.remove());
+                data.forEach(
+                    movie => {
+                        let element = document.createElement("aside");
+                        let table = document.createElement("table");
+                        let row = document.createElement("tr");
+                        let left = document.createElement("td");
+                        let right = document.createElement("td");
+                        let img = document.createElement("img");
+                        let title = document.createElement("h3");
+                        let ranking = document.createElement("p");
+                        right.setAttribute("class", "right");
+                        title.appendChild(document.createTextNode(movie.title));
+                        ranking.appendChild(document.createTextNode("Rating: " + movie.rating));
+                        img.setAttribute("src", movie.cover);
+                        right.appendChild(title);
+                        right.appendChild(ranking);
+                        row.appendChild(left);
+                        row.appendChild(right);
+                        left.appendChild(img);
+                        table.appendChild(row);
+                        element.appendChild(table)
+                        document.getElementById("movies").appendChild(element);
+                    }
+                )
+            });
+    }
+
+    function retrieveRecommendations() {
+        return fetch('/movies/recommendations')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll("#recommendations aside").forEach(el => el.remove());
+                data.forEach(
+                    movie => {
+                        let element = document.createElement("aside");
+                        let title = document.createElement("h3");
+                        let overview = document.createElement("p");
+                        title.appendChild(document.createTextNode(movie.title));
+                        overview.appendChild(document.createTextNode(movie.overview));
+                        element.appendChild(title);
+                        element.appendChild(overview);
+                        document.getElementById("recommendations").appendChild(element);
+                    }
+                )
+            });
+    }
+
+</script>
+
+</html>
